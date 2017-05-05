@@ -26,14 +26,29 @@ chatServer.on('connection', function(client) {
         console.log(data)
         broadcast(data, client)
     });
+
+    client.on('end', function() {
+        clientList.splice(clientList.indexOf(client), 1)
+    })
+
+    client.on('error', function(e) {
+        console.log(e)
+    })
+
     //client.write('Bye!\n');
     //client.end()
 });
 
 function broadcast(message, client) {
+    var cleanup = [];
     for(var i=0;i<clientList.length;i+=1) {
         if(client !== clientList[i]) {
-            clientList[i].write(client.name + " says " + message);
+            if(clientList[i].writable) {
+                clientList[i].write(client.name + " says " + message)
+            } else {
+                cleanup.push(clientList[i])
+                clientList[i].destroy()
+            }
         }
     }
 }
